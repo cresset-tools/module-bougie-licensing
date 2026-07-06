@@ -5,9 +5,9 @@
 
 declare(strict_types=1);
 
-namespace Bougie\Licensing\Model;
+namespace Cresset\BougieLicensing\Model;
 
-use Bougie\Licensing\Model\ResourceModel\License as LicenseResource;
+use Cresset\BougieLicensing\Model\ResourceModel\License as LicenseResource;
 use Magento\Framework\Model\AbstractModel;
 
 class License extends AbstractModel

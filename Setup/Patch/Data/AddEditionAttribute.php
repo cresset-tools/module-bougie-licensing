@@ -6,7 +6,7 @@
 
 declare(strict_types=1);
 
-namespace Bougie\Licensing\Setup\Patch\Data;
+namespace Cresset\BougieLicensing\Setup\Patch\Data;
 
 use Magento\Catalog\Model\Product;
 use Magento\Eav\Model\Entity\Attribute\ScopedAttributeInterface;

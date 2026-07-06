@@ -8,16 +8,16 @@
 
 declare(strict_types=1);
 
-namespace Bougie\Licensing\Service;
+namespace Cresset\BougieLicensing\Service;
 
-use Bougie\Licensing\Exception\ApiException;
-use Bougie\Licensing\Model\Api\Client;
-use Bougie\Licensing\Model\Config;
-use Bougie\Licensing\Model\License;
-use Bougie\Licensing\Model\LicenseFactory;
-use Bougie\Licensing\Model\ResourceModel\License as LicenseResource;
-use Bougie\Licensing\Model\ResourceModel\License\CollectionFactory;
-use Bougie\Licensing\Setup\Patch\Data\AddEditionAttribute;
+use Cresset\BougieLicensing\Exception\ApiException;
+use Cresset\BougieLicensing\Model\Api\Client;
+use Cresset\BougieLicensing\Model\Config;
+use Cresset\BougieLicensing\Model\License;
+use Cresset\BougieLicensing\Model\LicenseFactory;
+use Cresset\BougieLicensing\Model\ResourceModel\License as LicenseResource;
+use Cresset\BougieLicensing\Model\ResourceModel\License\CollectionFactory;
+use Cresset\BougieLicensing\Setup\Patch\Data\AddEditionAttribute;
 use Magento\Catalog\Api\ProductRepositoryInterface;
 use Magento\Framework\Encryption\EncryptorInterface;
 use Magento\Framework\Exception\NoSuchEntityException;

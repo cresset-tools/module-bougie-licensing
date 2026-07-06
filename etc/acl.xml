@@ -5,7 +5,7 @@
         <resources>
             <resource id="Magento_Backend::admin">
                 <resource id="Magento_Config::config">
-                    <resource id="Bougie_Licensing::config" title="Bougie Licensing" translate="title"/>
+                    <resource id="Cresset_BougieLicensing::config" title="Bougie Licensing" translate="title"/>
                 </resource>
             </resource>
         </resources>

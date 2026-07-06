@@ -6,10 +6,10 @@
 
 declare(strict_types=1);
 
-namespace Bougie\Licensing\Model\Api;
+namespace Cresset\BougieLicensing\Model\Api;
 
-use Bougie\Licensing\Exception\ApiException;
-use Bougie\Licensing\Model\Config;
+use Cresset\BougieLicensing\Exception\ApiException;
+use Cresset\BougieLicensing\Model\Config;
 use Magento\Framework\HTTP\Client\Curl;
 use Magento\Framework\HTTP\Client\CurlFactory;
 use Magento\Framework\Serialize\Serializer\Json;

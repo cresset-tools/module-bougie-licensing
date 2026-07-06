@@ -3,7 +3,7 @@
         xsi:noNamespaceSchemaLocation="urn:magento:framework:App/etc/routes.xsd">
     <router id="standard">
         <route id="bougie" frontName="bougie">
-            <module name="Bougie_Licensing"/>
+            <module name="Cresset_BougieLicensing"/>
         </route>
     </router>
 </config>

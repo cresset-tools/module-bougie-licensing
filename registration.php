@@ -9,6 +9,6 @@ use Magento\Framework\Component\ComponentRegistrar;
 
 ComponentRegistrar::register(
     ComponentRegistrar::MODULE,
-    'Bougie_Licensing',
+    'Cresset_BougieLicensing',
     __DIR__
 );

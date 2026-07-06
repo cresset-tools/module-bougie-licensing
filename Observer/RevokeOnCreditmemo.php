@@ -6,9 +6,9 @@
 
 declare(strict_types=1);
 
-namespace Bougie\Licensing\Observer;
+namespace Cresset\BougieLicensing\Observer;
 
-use Bougie\Licensing\Service\Provisioner;
+use Cresset\BougieLicensing\Service\Provisioner;
 use Magento\Framework\Event\Observer;
 use Magento\Framework\Event\ObserverInterface;
 use Psr\Log\LoggerInterface;

@@ -5,7 +5,7 @@
 
 declare(strict_types=1);
 
-namespace Bougie\Licensing\Model;
+namespace Cresset\BougieLicensing\Model;
 
 use Magento\Framework\App\Config\ScopeConfigInterface;
 use Magento\Framework\Encryption\EncryptorInterface;

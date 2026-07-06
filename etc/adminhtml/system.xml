@@ -10,7 +10,7 @@
             <class>separator-top</class>
             <label>Licensing</label>
             <tab>bougie</tab>
-            <resource>Bougie_Licensing::config</resource>
+            <resource>Cresset_BougieLicensing::config</resource>
             <group id="general" translate="label" type="text" sortOrder="10"
                    showInDefault="1" showInWebsite="1" showInStore="1">
                 <label>Connection</label>

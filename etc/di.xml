@@ -16,22 +16,22 @@
         </arguments>
     </virtualType>
 
-    <type name="Bougie\Licensing\Model\Api\Client">
+    <type name="Cresset\BougieLicensing\Model\Api\Client">
         <arguments>
             <argument name="logger" xsi:type="object">BougieLicensingLogger</argument>
         </arguments>
     </type>
-    <type name="Bougie\Licensing\Service\Provisioner">
+    <type name="Cresset\BougieLicensing\Service\Provisioner">
         <arguments>
             <argument name="logger" xsi:type="object">BougieLicensingLogger</argument>
         </arguments>
     </type>
-    <type name="Bougie\Licensing\Observer\ProvisionOnInvoicePaid">
+    <type name="Cresset\BougieLicensing\Observer\ProvisionOnInvoicePaid">
         <arguments>
             <argument name="logger" xsi:type="object">BougieLicensingLogger</argument>
         </arguments>
     </type>
-    <type name="Bougie\Licensing\Observer\RevokeOnCreditmemo">
+    <type name="Cresset\BougieLicensing\Observer\RevokeOnCreditmemo">
         <arguments>
             <argument name="logger" xsi:type="object">BougieLicensingLogger</argument>
         </arguments>

@@ -5,7 +5,7 @@
 
 declare(strict_types=1);
 
-namespace Bougie\Licensing\Exception;
+namespace Cresset\BougieLicensing\Exception;
 
 use Magento\Framework\Exception\LocalizedException;
 

@@ -5,10 +5,10 @@
 
 declare(strict_types=1);
 
-namespace Bougie\Licensing\Model\ResourceModel\License;
+namespace Cresset\BougieLicensing\Model\ResourceModel\License;
 
-use Bougie\Licensing\Model\License;
-use Bougie\Licensing\Model\ResourceModel\License as LicenseResource;
+use Cresset\BougieLicensing\Model\License;
+use Cresset\BougieLicensing\Model\ResourceModel\License as LicenseResource;
 use Magento\Framework\Model\ResourceModel\Db\Collection\AbstractCollection;
 
 class Collection extends AbstractCollection

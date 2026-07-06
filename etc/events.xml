@@ -3,10 +3,10 @@
         xsi:noNamespaceSchemaLocation="urn:magento:framework:Event/etc/events.xsd">
     <event name="sales_order_invoice_pay">
         <observer name="bougie_provision_on_invoice_paid"
-                  instance="Bougie\Licensing\Observer\ProvisionOnInvoicePaid"/>
+                  instance="Cresset\BougieLicensing\Observer\ProvisionOnInvoicePaid"/>
     </event>
     <event name="sales_order_creditmemo_save_after">
         <observer name="bougie_revoke_on_creditmemo"
-                  instance="Bougie\Licensing\Observer\RevokeOnCreditmemo"/>
+                  instance="Cresset\BougieLicensing\Observer\RevokeOnCreditmemo"/>
     </event>
 </config>

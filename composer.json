@@ -1,5 +1,5 @@
 {
-    "name": "cresset-tools/magento2-bougie-licensing",
+    "name": "cresset/module-bougie-licensing",
     "description": "Sell and provision Bougie Repo (sconce) Composer license keys from a Magento 2 store: map a catalog product to a repository edition (SKU), issue a key on order payment, and expose it in the customer's account with copy-paste Composer install instructions.",
     "type": "magento2-module",
     "license": [
@@ -17,7 +17,7 @@
     "autoload": {
         "files": ["registration.php"],
         "psr-4": {
-            "Bougie\\Licensing\\": ""
+            "Cresset\\BougieLicensing\\": ""
         }
     }
 }

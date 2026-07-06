@@ -6,7 +6,7 @@
 
 declare(strict_types=1);
 
-namespace Bougie\Licensing\Controller\Account;
+namespace Cresset\BougieLicensing\Controller\Account;
 
 use Magento\Customer\Controller\AbstractAccount;
 use Magento\Framework\App\Action\Context;

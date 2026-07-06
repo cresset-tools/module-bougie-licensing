@@ -7,11 +7,11 @@
 
 declare(strict_types=1);
 
-namespace Bougie\Licensing\Block\Account;
+namespace Cresset\BougieLicensing\Block\Account;
 
-use Bougie\Licensing\Model\Config;
-use Bougie\Licensing\Model\License;
-use Bougie\Licensing\Model\ResourceModel\License\CollectionFactory;
+use Cresset\BougieLicensing\Model\Config;
+use Cresset\BougieLicensing\Model\License;
+use Cresset\BougieLicensing\Model\ResourceModel\License\CollectionFactory;
 use Magento\Customer\Model\Session as CustomerSession;
 use Magento\Framework\Encryption\EncryptorInterface;
 use Magento\Framework\View\Element\Template;

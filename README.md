@@ -10,8 +10,8 @@ Magento owns commerce (catalog, tax, invoicing, subscriptions); Bougie just
 **provisions and gates** — this module is the bridge, talking to the Bougie
 management API (`/api/v1`).
 
-- **Composer package:** `cresset-tools/magento2-bougie-licensing`
-- **Magento module:** `Bougie_Licensing`
+- **Composer package:** `cresset/module-bougie-licensing`
+- **Magento module:** `Cresset_BougieLicensing`
 - **Requires:** Magento Open Source / Adobe Commerce 2.4.4+, PHP 8.1+
 
 ## How it works
@@ -40,8 +40,8 @@ management API (`/api/v1`).
 ## Install
 
 ```bash
-composer require cresset-tools/magento2-bougie-licensing
-bin/magento module:enable Bougie_Licensing
+composer require cresset/module-bougie-licensing
+bin/magento module:enable Cresset_BougieLicensing
 bin/magento setup:upgrade          # creates the bougie_license table + product attribute
 bin/magento setup:di:compile       # production mode only
 bin/magento cache:flush

@@ -5,7 +5,7 @@
 
 declare(strict_types=1);
 
-namespace Bougie\Licensing\Model\ResourceModel;
+namespace Cresset\BougieLicensing\Model\ResourceModel;
 
 use Magento\Framework\Model\ResourceModel\Db\AbstractDb;
 

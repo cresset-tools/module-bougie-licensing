@@ -1,0 +1,49 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Config:etc/system_file.xsd">
+    <system>
+        <tab id="bougie" translate="label" sortOrder="400">
+            <label>Bougie</label>
+        </tab>
+        <section id="bougie_licensing" translate="label" type="text" sortOrder="10"
+                 showInDefault="1" showInWebsite="1" showInStore="1">
+            <class>separator-top</class>
+            <label>Licensing</label>
+            <tab>bougie</tab>
+            <resource>Bougie_Licensing::config</resource>
+            <group id="general" translate="label" type="text" sortOrder="10"
+                   showInDefault="1" showInWebsite="1" showInStore="1">
+                <label>Connection</label>
+                <field id="enabled" translate="label" type="select" sortOrder="10"
+                       showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Enable provisioning</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    <comment>When off, orders are not provisioned and no calls are made to the Bougie API.</comment>
+                </field>
+                <field id="api_base_url" translate="label comment" type="text" sortOrder="20"
+                       showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>API base URL</label>
+                    <comment>Your Bougie (sconce) endpoint, e.g. https://packages.example.com. The management API lives under /api/v1.</comment>
+                    <validate>required-entry validate-url</validate>
+                </field>
+                <field id="org" translate="label" type="text" sortOrder="30"
+                       showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Organization slug</label>
+                    <validate>required-entry</validate>
+                </field>
+                <field id="repo" translate="label" type="text" sortOrder="40"
+                       showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Repository slug</label>
+                    <comment>The seller repository keys are issued against, i.e. the {org}/{repo} in the API path.</comment>
+                    <validate>required-entry</validate>
+                </field>
+                <field id="service_token" translate="label comment" type="obscure" sortOrder="50"
+                       showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Service token</label>
+                    <backend_model>Magento\Config\Model\Config\Backend\Encrypted</backend_model>
+                    <comment>A repo-scoped service token (sconce service-token create). Sent as an Authorization: Bearer credential. Stored encrypted.</comment>
+                </field>
+            </group>
+        </section>
+    </system>
+</config>

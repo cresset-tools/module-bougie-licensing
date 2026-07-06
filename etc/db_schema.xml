@@ -1,0 +1,39 @@
+<?xml version="1.0"?>
+<schema xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:framework:Setup/Declaration/Schema/etc/schema.xsd">
+    <table name="bougie_license" resource="default" engine="innodb"
+           comment="Bougie license keys provisioned from orders">
+        <column xsi:type="int" name="entity_id" unsigned="true" nullable="false" identity="true"
+                comment="Row id"/>
+        <column xsi:type="int" name="order_id" unsigned="true" nullable="true" comment="Sales order id"/>
+        <column xsi:type="int" name="order_item_id" unsigned="true" nullable="true" comment="Sales order item id"/>
+        <column xsi:type="int" name="customer_id" unsigned="true" nullable="true" comment="Customer id"/>
+        <column xsi:type="smallint" name="store_id" unsigned="true" nullable="true" comment="Store id"/>
+        <column xsi:type="varchar" name="edition" nullable="false" length="255" default="" comment="Edition name/slug"/>
+        <column xsi:type="varchar" name="license_id" nullable="false" length="64" default=""
+                comment="sconce license key id (uuid)"/>
+        <column xsi:type="text" name="license_key" nullable="true" comment="The plaintext key (shown once by sconce; stored so the buyer can retrieve it)"/>
+        <column xsi:type="varchar" name="status" nullable="false" length="32" default="active"
+                comment="active | revoked"/>
+        <column xsi:type="varchar" name="bound_until" nullable="true" length="32" comment="Update-bound date (YYYY-MM-DD), if time-bounded"/>
+        <column xsi:type="text" name="packages" nullable="true" comment="Entitled package names, comma-separated (display snapshot)"/>
+        <column xsi:type="timestamp" name="created_at" nullable="false" default="CURRENT_TIMESTAMP" comment="Created at"/>
+        <column xsi:type="timestamp" name="updated_at" nullable="false" default="CURRENT_TIMESTAMP"
+                on_update="true" comment="Updated at"/>
+        <constraint xsi:type="primary" referenceId="PRIMARY">
+            <column name="entity_id"/>
+        </constraint>
+        <constraint xsi:type="unique" referenceId="BOUGIE_LICENSE_ORDER_ITEM_ID">
+            <column name="order_item_id"/>
+        </constraint>
+        <index referenceId="BOUGIE_LICENSE_CUSTOMER_ID" indexType="btree">
+            <column name="customer_id"/>
+        </index>
+        <index referenceId="BOUGIE_LICENSE_ORDER_ID" indexType="btree">
+            <column name="order_id"/>
+        </index>
+        <index referenceId="BOUGIE_LICENSE_LICENSE_ID" indexType="btree">
+            <column name="license_id"/>
+        </index>
+    </table>
+</schema>

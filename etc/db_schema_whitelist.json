@@ -1,0 +1,28 @@
+{
+    "bougie_license": {
+        "column": {
+            "entity_id": true,
+            "order_id": true,
+            "order_item_id": true,
+            "customer_id": true,
+            "store_id": true,
+            "edition": true,
+            "license_id": true,
+            "license_key": true,
+            "status": true,
+            "bound_until": true,
+            "packages": true,
+            "created_at": true,
+            "updated_at": true
+        },
+        "constraint": {
+            "PRIMARY": true,
+            "BOUGIE_LICENSE_ORDER_ITEM_ID": true
+        },
+        "index": {
+            "BOUGIE_LICENSE_CUSTOMER_ID": true,
+            "BOUGIE_LICENSE_ORDER_ID": true,
+            "BOUGIE_LICENSE_LICENSE_ID": true
+        }
+    }
+}

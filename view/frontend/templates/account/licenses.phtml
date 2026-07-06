@@ -1,0 +1,58 @@
+<?php
+/**
+ * "My Licenses" account page.
+ *
+ * @var \Bougie\Licensing\Block\Account\Licenses $block
+ * @var \Magento\Framework\Escaper $escaper
+ */
+
+$licenses = $block->getLicenses();
+$repoUrl = $block->getRepositoryUrl();
+$host = $block->getRepositoryHost();
+?>
+<div class="block bougie-licenses">
+    <div class="block-title"><strong><?= $escaper->escapeHtml(__('My Licenses')) ?></strong></div>
+    <div class="block-content">
+        <?php if (empty($licenses)): ?>
+            <p><?= $escaper->escapeHtml(__('You have no licenses yet. They appear here once an order with a licensed product is paid.')) ?></p>
+        <?php else: ?>
+            <p><?= $escaper->escapeHtml(__('Install your purchased packages with Composer using the license key as the http-basic password (the username is ignored).')) ?></p>
+            <?php foreach ($licenses as $license): ?>
+                <?php
+                $key = $license->getLicenseKey();
+                $packages = $license->getPackages();
+                $requireLine = $packages !== []
+                    ? 'composer require ' . implode(' ', $packages)
+                    : 'composer require <vendor>/<package>';
+                ?>
+                <div class="bougie-license" style="border:1px solid #e3e3e3;border-radius:6px;padding:1rem 1.25rem;margin-bottom:1rem">
+                    <p style="margin:0 0 .5rem">
+                        <strong><?= $escaper->escapeHtml($license->getEdition()) ?></strong>
+                        <?php if ($license->isActive()): ?>
+                            <span style="color:#1a7f37"><?= $escaper->escapeHtml(__('active')) ?></span>
+                        <?php else: ?>
+                            <span style="color:#a1260d"><?= $escaper->escapeHtml(__('revoked')) ?></span>
+                        <?php endif; ?>
+                        <?php if ($license->getBoundUntil() !== null): ?>
+                            &middot; <?= $escaper->escapeHtml(__('updates until %1', $license->getBoundUntil())) ?>
+                        <?php endif; ?>
+                    </p>
+                    <?php if ($packages !== []): ?>
+                        <p style="margin:0 0 .5rem;color:#555">
+                            <?= $escaper->escapeHtml(__('Entitled packages: %1', implode(', ', $packages))) ?>
+                        </p>
+                    <?php endif; ?>
+                    <?php if ($license->isActive() && $key !== null && $repoUrl !== '' && $host !== ''): ?>
+                        <pre style="white-space:pre-wrap;background:#f6f6f6;padding:.75rem;border-radius:4px;overflow:auto"><?php
+                            echo $escaper->escapeHtml('composer config repositories.bougie composer ' . $repoUrl) . "\n";
+                            echo $escaper->escapeHtml('composer config --auth http-basic.' . $host . ' token ' . $key) . "\n";
+                            echo $escaper->escapeHtml($requireLine);
+                        ?></pre>
+                    <?php elseif ($license->isActive() && $key === null): ?>
+                        <p style="color:#a1260d"><?= $escaper->escapeHtml(__('This license key is not available for display. Contact support to have it re-issued.')) ?></p>
+                    <?php endif; ?>
+                </div>
+            <?php endforeach; ?>
+        <?php endif; ?>
+    </div>
+</div>

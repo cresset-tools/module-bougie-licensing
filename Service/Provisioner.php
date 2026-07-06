@@ -19,6 +19,7 @@ use Bougie\Licensing\Model\ResourceModel\License as LicenseResource;
 use Bougie\Licensing\Model\ResourceModel\License\CollectionFactory;
 use Bougie\Licensing\Setup\Patch\Data\AddEditionAttribute;
 use Magento\Catalog\Api\ProductRepositoryInterface;
+use Magento\Framework\Encryption\EncryptorInterface;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Sales\Api\Data\OrderInterface;
 use Magento\Sales\Api\Data\OrderItemInterface;
@@ -33,6 +34,7 @@ class Provisioner
         private readonly LicenseResource $licenseResource,
         private readonly CollectionFactory $collectionFactory,
         private readonly ProductRepositoryInterface $productRepository,
+        private readonly EncryptorInterface $encryptor,
         private readonly LoggerInterface $logger
     ) {
     }
@@ -81,6 +83,9 @@ class Provisioner
             return; // never block the order — a retry (or re-invoice) can re-run
         }
 
+        // The key is shown once by sconce; we store it (encrypted at rest with
+        // Magento's crypt key) so the buyer can retrieve it from their account.
+        $key = $resp['key'] ?? null;
         $license = $this->licenseFactory->create();
         $license->addData([
             'order_id' => (int)$order->getId(),
@@ -89,7 +94,7 @@ class Provisioner
             'store_id' => (int)$storeId,
             'edition' => $edition,
             'license_id' => (string)($resp['id'] ?? ''),
-            'license_key' => $resp['key'] ?? null,
+            'license_key' => (is_string($key) && $key !== '') ? $this->encryptor->encrypt($key) : null,
             'status' => (string)($resp['status'] ?? 'active'),
             'bound_until' => $resp['bound']['until'] ?? null,
             'packages' => (isset($resp['packages']) && is_array($resp['packages']))

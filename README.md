@@ -122,8 +122,9 @@ store) are supported by the API and left as follow-ups; the `renewLicense` /
 - Provisioning triggers on **invoice payment**. If you use offline payments that
   don't create/pay an invoice, provision by invoicing the order.
 - The license key is shown **once** by sconce and stored by this module so the
-  buyer can retrieve it. If the module's DB row is lost but sconce already issued
-  the key (idempotent replay returns no secret), "My Licenses" shows a
+  buyer can retrieve it, **encrypted at rest** with the Magento crypt key (like
+  any other stored credential). If the module's DB row is lost but sconce already
+  issued the key (idempotent replay returns no secret), "My Licenses" shows a
   "contact support to re-issue" note rather than a key.
 - One license is issued per **order line item** that maps to an edition (product
   quantity is not multiplied — a license is not a consumable).

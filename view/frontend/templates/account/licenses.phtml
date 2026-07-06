@@ -19,7 +19,7 @@ $host = $block->getRepositoryHost();
             <p><?= $escaper->escapeHtml(__('Install your purchased packages with Composer using the license key as the http-basic password (the username is ignored).')) ?></p>
             <?php foreach ($licenses as $license): ?>
                 <?php
-                $key = $license->getLicenseKey();
+                $key = $block->getLicenseKey($license);
                 $packages = $license->getPackages();
                 $requireLine = $packages !== []
                     ? 'composer require ' . implode(' ', $packages)

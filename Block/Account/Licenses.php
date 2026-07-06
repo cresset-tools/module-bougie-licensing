@@ -13,6 +13,7 @@ use Bougie\Licensing\Model\Config;
 use Bougie\Licensing\Model\License;
 use Bougie\Licensing\Model\ResourceModel\License\CollectionFactory;
 use Magento\Customer\Model\Session as CustomerSession;
+use Magento\Framework\Encryption\EncryptorInterface;
 use Magento\Framework\View\Element\Template;
 use Magento\Framework\View\Element\Template\Context;
 
@@ -23,9 +24,24 @@ class Licenses extends Template
         private readonly CustomerSession $customerSession,
         private readonly CollectionFactory $collectionFactory,
         private readonly Config $config,
+        private readonly EncryptorInterface $encryptor,
         array $data = []
     ) {
         parent::__construct($context, $data);
+    }
+
+    /**
+     * The decrypted license key for display, or null if none is stored (a key is
+     * kept encrypted at rest with the Magento crypt key).
+     */
+    public function getLicenseKey(License $license): ?string
+    {
+        $stored = $license->getLicenseKey();
+        if ($stored === null) {
+            return null;
+        }
+        $plain = $this->encryptor->decrypt($stored);
+        return $plain === '' ? null : $plain;
     }
 
     /**

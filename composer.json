@@ -2,7 +2,10 @@
     "name": "cresset-tools/magento2-bougie-licensing",
     "description": "Sell and provision Bougie Repo (sconce) Composer license keys from a Magento 2 store: map a catalog product to a repository edition (SKU), issue a key on order payment, and expose it in the customer's account with copy-paste Composer install instructions.",
     "type": "magento2-module",
-    "license": "MIT",
+    "license": [
+        "OSL-3.0",
+        "AFL-3.0"
+    ],
     "keywords": ["magento2", "composer", "license", "bougie", "sconce", "private-packages"],
     "require": {
         "php": ">=8.1",

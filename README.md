@@ -10,6 +10,13 @@ Magento owns commerce (catalog, tax, invoicing, subscriptions); Bougie just
 **provisions and gates** — this module is the bridge, talking to the Bougie
 management API (`/api/v1`).
 
+**Subscriptions** (recurring licenses) are supported through a small provider
+seam: install a companion module for your subscription engine and a renewal
+charge **extends** the buyer's existing license instead of issuing a new key. A
+Mollie provider ships as a separate package,
+[`cresset/module-bougie-licensing-mollie`](https://github.com/cresset-tools/module-bougie-licensing-mollie);
+see [Subscriptions](#subscriptions).
+
 - **Composer package:** `cresset/module-bougie-licensing`
 - **Magento module:** `Cresset_BougieLicensing`
 - **Requires:** Magento Open Source / Adobe Commerce 2.4.4+, PHP 8.1+
@@ -108,14 +115,72 @@ All under `/api/v1/repos/{org}/{repo}`, authenticated with the service token as
 | Call                                   | When                              |
 |----------------------------------------|-----------------------------------|
 | `POST license-keys`                    | order invoice paid (idempotent)   |
+| `POST license-keys/{id}/renew`         | subscription renewal charge paid (idempotent) |
 | `DELETE license-keys/{id}`             | credit memo (refund) for the item |
 | `GET license-keys/{id}`                | (available for inspect/sync)      |
-| `POST license-keys/{id}/renew`         | (available for subscription renew)|
 | `GET editions`                         | (available for product mapping)   |
 
-Renewal extension and admin sync-back (a dashboard-side revoke reflecting in the
-store) are supported by the API and left as follow-ups; the `renewLicense` /
-`inspectLicense` / `listEditions` client methods are already in place.
+Admin sync-back (a dashboard-side revoke reflecting in the store) is supported by
+the API and left as a follow-up; the `inspectLicense` / `listEditions` client
+methods are already in place.
+
+## Subscriptions
+
+A recurring subscription should **renew** a license (extend its update bound),
+not mint a new key every cycle. Magento subscription engines (Mollie, Amasty, …)
+model a renewal as a **new paid order**, which would otherwise look like a fresh
+purchase. This module stays engine-agnostic and delegates recognition to a
+**provider** you install alongside it:
+
+```
+ recurring charge → the engine creates a new paid order
+        │  invoice paid  (sales_order_invoice_pay)
+        ▼
+ Provisioner ─▶ ProviderPool.resolve(order)
+        │        └─ Cresset\BougieLicensing\Api\SubscriptionProviderInterface::classify()
+        │           returns a renewal context for a recurring charge, null otherwise
+        ▼
+ renewal? ── yes ─▶ POST /api/v1/.../license-keys/{id}/renew   (idempotent; extends bound)
+        └── no  ─▶ issue as usual (initial purchase / one-off)
+```
+
+- **Initial** subscription purchase → issues a key like any order, then links it
+  to the subscription on the first renewal, so there's no dependency on the
+  engine's bookkeeping existing yet at checkout.
+- **Renewal** charge → extends the linked license via the idempotent `/renew`; a
+  retried webhook can't double-extend (the renewal order's increment id is the
+  idempotency key).
+- **Cancel** → the license **lapses** (keeps updates through the paid-through
+  bound, stops renewing); it is not revoked. **Restart** un-lapses it.
+
+With no provider installed the pool is empty and behaviour is exactly as above
+the seam — every order is a plain one-off.
+
+### Providers
+
+| Engine | Package | Repo |
+|--------|---------|------|
+| Mollie | `cresset/module-bougie-licensing-mollie` | [cresset-tools/module-bougie-licensing-mollie](https://github.com/cresset-tools/module-bougie-licensing-mollie) |
+| Amasty | _(planned)_ | — |
+
+**Writing one:** implement
+`Cresset\BougieLicensing\Api\SubscriptionProviderInterface` and register it into
+the pool via `di.xml`:
+
+```xml
+<type name="Cresset\BougieLicensing\Model\Subscription\ProviderPool">
+    <arguments>
+        <argument name="providers" xsi:type="array">
+            <item name="mollie" xsi:type="object">Vendor\Module\Model\Provider</item>
+        </argument>
+    </arguments>
+</type>
+```
+
+For lifecycle events that don't arrive as an order (cancel/restart), observe your
+engine's events and call
+`Cresset\BougieLicensing\Api\LicenseSubscriptionManagementInterface`
+(`cancel` / `renew` / `restart`).
 
 ## Notes & limitations
 

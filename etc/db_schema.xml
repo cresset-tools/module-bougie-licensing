@@ -17,6 +17,12 @@
                 comment="active | revoked"/>
         <column xsi:type="varchar" name="bound_until" nullable="true" length="32" comment="Update-bound date (YYYY-MM-DD), if time-bounded"/>
         <column xsi:type="text" name="packages" nullable="true" comment="Entitled package names, comma-separated (display snapshot)"/>
+        <column xsi:type="varchar" name="subscription_provider" nullable="true" length="64"
+                comment="Subscription provider code (e.g. mollie), when this license renews on a subscription"/>
+        <column xsi:type="varchar" name="subscription_id" nullable="true" length="191"
+                comment="The provider's subscription id (stable across renewals)"/>
+        <column xsi:type="varchar" name="subscription_status" nullable="true" length="32"
+                comment="active | cancelled — cancelled lapses at bound_until (never renewed again)"/>
         <column xsi:type="timestamp" name="created_at" nullable="false" default="CURRENT_TIMESTAMP" comment="Created at"/>
         <column xsi:type="timestamp" name="updated_at" nullable="false" default="CURRENT_TIMESTAMP"
                 on_update="true" comment="Updated at"/>
@@ -34,6 +40,10 @@
         </index>
         <index referenceId="BOUGIE_LICENSE_LICENSE_ID" indexType="btree">
             <column name="license_id"/>
+        </index>
+        <index referenceId="BOUGIE_LICENSE_SUBSCRIPTION" indexType="btree">
+            <column name="subscription_provider"/>
+            <column name="subscription_id"/>
         </index>
     </table>
 </schema>

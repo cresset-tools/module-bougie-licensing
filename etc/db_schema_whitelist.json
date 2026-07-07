@@ -12,6 +12,9 @@
             "status": true,
             "bound_until": true,
             "packages": true,
+            "subscription_provider": true,
+            "subscription_id": true,
+            "subscription_status": true,
             "created_at": true,
             "updated_at": true
         },
@@ -22,7 +25,8 @@
         "index": {
             "BOUGIE_LICENSE_CUSTOMER_ID": true,
             "BOUGIE_LICENSE_ORDER_ID": true,
-            "BOUGIE_LICENSE_LICENSE_ID": true
+            "BOUGIE_LICENSE_LICENSE_ID": true,
+            "BOUGIE_LICENSE_SUBSCRIPTION": true
         }
     }
 }

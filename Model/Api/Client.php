@@ -62,13 +62,18 @@ class Client
 
     /**
      * Extend a time-bounded license by its edition's period (subscription renewal).
+     * Idempotent on $idempotencyKey (a stable per-renewal id): a retried renewal
+     * webhook returns the current bound instead of extending the license again.
      *
      * @return array<string, mixed> the refreshed license JSON
      * @throws ApiException
      */
-    public function renewLicense(string $licenseId, $storeId = null): array
+    public function renewLicense(string $licenseId, ?string $idempotencyKey = null, $storeId = null): array
     {
-        $curl = $this->newCurl($storeId);
+        $headers = ($idempotencyKey !== null && $idempotencyKey !== '')
+            ? ['Idempotency-Key' => $idempotencyKey]
+            : [];
+        $curl = $this->newCurl($storeId, $headers);
         $curl->post($this->url('/license-keys/' . rawurlencode($licenseId) . '/renew', $storeId), '');
         return $this->handle($curl, [200], 'renew license');
     }

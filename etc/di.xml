@@ -26,6 +26,30 @@
             <argument name="logger" xsi:type="object">BougieLicensingLogger</argument>
         </arguments>
     </type>
+    <type name="Cresset\BougieLicensing\Model\Subscription\Management">
+        <arguments>
+            <argument name="logger" xsi:type="object">BougieLicensingLogger</argument>
+        </arguments>
+    </type>
+    <!--
+        The subscription provider registry. Empty here; a provider module (e.g.
+        Cresset_BougieLicensingMollie) adds itself by merging into this array:
+
+            <type name="Cresset\BougieLicensing\Model\Subscription\ProviderPool">
+                <arguments>
+                    <argument name="providers" xsi:type="array">
+                        <item name="mollie" xsi:type="object">Cresset\BougieLicensingMollie\Model\Provider</item>
+                    </argument>
+                </arguments>
+            </type>
+    -->
+    <type name="Cresset\BougieLicensing\Model\Subscription\ProviderPool">
+        <arguments>
+            <argument name="providers" xsi:type="array"/>
+        </arguments>
+    </type>
+    <preference for="Cresset\BougieLicensing\Api\LicenseSubscriptionManagementInterface"
+                type="Cresset\BougieLicensing\Model\Subscription\Management"/>
     <type name="Cresset\BougieLicensing\Observer\ProvisionOnInvoicePaid">
         <arguments>
             <argument name="logger" xsi:type="object">BougieLicensingLogger</argument>

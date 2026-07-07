@@ -57,4 +57,46 @@ class License extends AbstractModel
     {
         return $this->getStatus() === 'active';
     }
+
+    /**
+     * Store the license was provisioned in (for per-store API config).
+     */
+    public function getStoreId(): ?int
+    {
+        $v = $this->getData('store_id');
+        return $v === null ? null : (int)$v;
+    }
+
+    /**
+     * The subscription provider code (e.g. `mollie`) this license renews on, or
+     * `null` for a one-off (non-subscription) license.
+     */
+    public function getSubscriptionProvider(): ?string
+    {
+        $v = $this->getData('subscription_provider');
+        return $v === null || $v === '' ? null : (string)$v;
+    }
+
+    /**
+     * The provider's subscription id this license is linked to, or `null`.
+     */
+    public function getSubscriptionId(): ?string
+    {
+        $v = $this->getData('subscription_id');
+        return $v === null || $v === '' ? null : (string)$v;
+    }
+
+    /**
+     * `active`, `cancelled`, or `null` (not a subscription).
+     */
+    public function getSubscriptionStatus(): ?string
+    {
+        $v = $this->getData('subscription_status');
+        return $v === null || $v === '' ? null : (string)$v;
+    }
+
+    public function isSubscription(): bool
+    {
+        return $this->getSubscriptionId() !== null;
+    }
 }

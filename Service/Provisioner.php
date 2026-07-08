@@ -139,14 +139,8 @@ class Provisioner
         if ($this->findByOrderItem($itemId) !== null) {
             return; // already provisioned
         }
-        $idempotencyKey = $order->getIncrementId() . ':' . $itemId;
         try {
-            $resp = $this->client->issueLicense(
-                $edition,
-                (string)$order->getCustomerEmail(),
-                $idempotencyKey,
-                $storeId
-            );
+            $resp = $this->issueOrAccumulate($order, $item, $edition, $resolved);
         } catch (ApiException $e) {
             $this->logger->error(sprintf(
                 'Bougie: could not provision order %s item %d (%s): %s',
@@ -188,7 +182,75 @@ class Provisioner
     }
 
     /**
-     * Revoke the license provisioned for an order item (refund/return).
+     * Issue a key for this item, or — for a repeat perpetual purchase by a
+     * registered customer — accumulate the edition onto their existing account
+     * key so one Composer credential unlocks everything they own. Subscriptions
+     * (whose update bound is per-subscription) and guests (no account to
+     * accumulate onto) always get their own key. Returns the license JSON to
+     * store, in the same shape whether issued or accumulated.
+     *
+     * @return array<string, mixed>
+     * @throws ApiException
+     */
+    private function issueOrAccumulate(
+        OrderInterface $order,
+        OrderItemInterface $item,
+        string $edition,
+        ?ResolvedSubscription $resolved
+    ): array {
+        $storeId = $order->getStoreId();
+        $customerId = $order->getCustomerId() ? (int)$order->getCustomerId() : null;
+
+        if ($resolved === null && $customerId !== null) {
+            $accountKey = $this->findAccountKey($customerId, $storeId);
+            if ($accountKey !== null) {
+                $resp = $this->client->addEdition($accountKey->getLicenseId(), $edition, $storeId);
+                if ($resp !== null) {
+                    return $resp; // merged onto the customer's account key
+                }
+                // sconce refused to merge (a bounded/snapshot edition) — fall
+                // through and issue this edition its own standalone key.
+            }
+        }
+        // The order id + item id is the idempotency key: a retried/re-invoiced
+        // order returns the same key rather than minting a duplicate.
+        return $this->client->issueLicense(
+            $edition,
+            (string)$order->getCustomerEmail(),
+            $order->getIncrementId() . ':' . (int)$item->getItemId(),
+            $storeId
+        );
+    }
+
+    /**
+     * The customer's "account key" — their most recent active, perpetual,
+     * non-subscription license — that a repeat perpetual purchase accumulates
+     * onto. Perpetual (`bound_until` null) and non-subscription (`subscription_id`
+     * null) only: sconce stores the update bound per key, so a bounded or
+     * subscription key can't absorb another edition. `null` if they have none yet.
+     */
+    private function findAccountKey(int $customerId, $storeId): ?License
+    {
+        $collection = $this->collectionFactory->create();
+        $collection->addFieldToFilter('customer_id', $customerId)
+            ->addFieldToFilter('store_id', (int)$storeId)
+            ->addFieldToFilter('status', 'active')
+            ->addFieldToFilter('bound_until', ['null' => true])
+            ->addFieldToFilter('subscription_id', ['null' => true])
+            ->addFieldToFilter('license_id', ['neq' => ''])
+            ->setOrder('entity_id', 'DESC')
+            ->setPageSize(1);
+        /** @var License|false $license */
+        $license = $collection->getFirstItem();
+        return $license && $license->getId() ? $license : null;
+    }
+
+    /**
+     * Revoke the entitlement provisioned for an order item (refund/return). On a
+     * shared key (repeat purchases accumulated onto one key) this must not kill
+     * the whole key: it detaches only this item's edition, and revokes the key
+     * itself only once its **last** active item is gone. On the common
+     * one-item-per-key case this collapses to a plain key revoke.
      */
     public function revokeOrderItem(int $orderItemId, $storeId = null): void
     {
@@ -199,12 +261,33 @@ class Provisioner
         if ($license === null || !$license->isActive() || $license->getLicenseId() === '') {
             return;
         }
+        $licenseId = $license->getLicenseId();
+        $edition = $license->getEdition();
+        // Other still-active items sharing this key (accumulation). Whether any of
+        // them still entitles THIS edition decides if we may detach it.
+        $siblings = $this->activeSiblings($license);
+        $editionStillHeld = false;
+        foreach ($siblings as $sibling) {
+            if ($sibling->getEdition() === $edition) {
+                $editionStillHeld = true;
+                break;
+            }
+        }
         try {
-            $this->client->revokeLicense($license->getLicenseId(), $storeId);
+            if ($siblings === []) {
+                // Last item on the key — revoke the whole key.
+                $this->client->revokeLicense($licenseId, $storeId);
+            } elseif (!$editionStillHeld) {
+                // The key lives on for other items, but none of them cover this
+                // edition — detach just its content.
+                $this->client->removeEdition($licenseId, $edition, $storeId);
+            }
+            // else: another active item still covers this edition — leave the
+            // key's entitlement intact (the buyer keeps a copy they paid for).
         } catch (ApiException $e) {
             $this->logger->error(sprintf(
                 'Bougie: could not revoke license %s for order item %d: %s',
-                $license->getLicenseId(),
+                $licenseId,
                 $orderItemId,
                 $e->getMessage()
             ));
@@ -212,6 +295,21 @@ class Provisioner
         }
         $license->setData('status', 'revoked');
         $this->licenseResource->save($license);
+    }
+
+    /**
+     * Other active license rows sharing this row's key (excluding itself) — the
+     * items still holding a shared, accumulated key.
+     *
+     * @return License[]
+     */
+    private function activeSiblings(License $license): array
+    {
+        $collection = $this->collectionFactory->create();
+        $collection->addFieldToFilter('license_id', $license->getLicenseId())
+            ->addFieldToFilter('status', 'active')
+            ->addFieldToFilter('entity_id', ['neq' => (int)$license->getId()]);
+        return array_values($collection->getItems());
     }
 
     private function editionForProduct(int $productId, $storeId): ?string

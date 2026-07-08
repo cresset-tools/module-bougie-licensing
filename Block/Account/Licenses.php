@@ -62,6 +62,53 @@ class Licenses extends Template
     }
 
     /**
+     * The customer's licenses grouped by underlying key: a repeat buyer of
+     * perpetual editions accumulates onto one key, so several rows share a
+     * `license_id`. Each group is one card — one credential, the union of
+     * entitled packages, and the editions it covers. Newest group first. Rows
+     * with no key id (a failed issue) stand alone.
+     *
+     * @return array<int, array{active: bool, boundUntil: ?string, editions: string[], packages: string[], key: ?string}>
+     */
+    public function getLicenseGroups(): array
+    {
+        $byKey = [];
+        foreach ($this->getLicenses() as $license) {
+            $id = $license->getLicenseId();
+            $groupKey = $id !== '' ? 'k:' . $id : 'r:' . $license->getId();
+            $byKey[$groupKey][] = $license;
+        }
+
+        $groups = [];
+        foreach ($byKey as $rows) {
+            // Prefer the still-active rows for what the key currently holds; fall
+            // back to all rows so a fully-revoked key still names its edition.
+            $active = array_values(array_filter($rows, static fn(License $l) => $l->isActive()));
+            $source = $active !== [] ? $active : $rows;
+            $editions = [];
+            $packages = [];
+            $key = null;
+            foreach ($source as $license) {
+                $editions[] = $license->getEdition();
+                $packages = array_merge($packages, $license->getPackages());
+                if ($key === null) {
+                    $key = $this->getLicenseKey($license);
+                }
+            }
+            $packages = array_values(array_unique($packages));
+            sort($packages);
+            $groups[] = [
+                'active' => $active !== [],
+                'boundUntil' => $rows[0]->getBoundUntil(),
+                'editions' => array_values(array_unique(array_filter($editions))),
+                'packages' => $packages,
+                'key' => $key,
+            ];
+        }
+        return $groups;
+    }
+
+    /**
      * The Composer repository URL buyers add: {base}/{org}/{repo}.
      */
     public function getRepositoryUrl(): string

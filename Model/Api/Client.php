@@ -96,6 +96,51 @@ class Client
     }
 
     /**
+     * Attach an edition's content to an existing key, so a repeat buyer
+     * accumulates their purchases onto one key (one Composer credential unlocks
+     * everything they own). Idempotent.
+     *
+     * @return array<string, mixed>|null the updated license JSON (id, key,
+     *     packages union, bound), or `null` when sconce refuses to merge this
+     *     edition onto the key (HTTP 409 — a time/version-bounded or snapshot
+     *     edition) and the caller should issue a standalone key instead
+     * @throws ApiException
+     */
+    public function addEdition(string $licenseId, string $edition, $storeId = null): ?array
+    {
+        $curl = $this->newCurl($storeId);
+        $curl->post(
+            $this->url('/license-keys/' . rawurlencode($licenseId) . '/editions', $storeId),
+            $this->json->serialize(['edition' => $edition])
+        );
+        if ($curl->getStatus() === 409) {
+            return null;
+        }
+        return $this->handle($curl, [200], 'add edition to license');
+    }
+
+    /**
+     * Detach an edition's content from a key (a refund of one line item on a
+     * shared key). Idempotent-ish: a 404 (key already gone) is treated as success
+     * so a repeated refund doesn't error. Never revokes the key.
+     *
+     * @throws ApiException
+     */
+    public function removeEdition(string $licenseId, string $edition, $storeId = null): void
+    {
+        $curl = $this->newCurl($storeId);
+        $curl->setOption(CURLOPT_CUSTOMREQUEST, 'DELETE');
+        $curl->get($this->url(
+            '/license-keys/' . rawurlencode($licenseId) . '/editions/' . rawurlencode($edition),
+            $storeId
+        ));
+        $status = $curl->getStatus();
+        if ($status !== 204 && $status !== 404) {
+            $this->fail($curl, 'remove edition from license');
+        }
+    }
+
+    /**
      * List the repo's editions (for mapping a product to a SKU).
      *
      * @return array<int, array<string, mixed>>

@@ -144,7 +144,15 @@ class Management implements LicenseSubscriptionManagementInterface
             return;
         }
         try {
-            $resp = $this->client->renewLicense(
+            // Account keys carry the subscription's bound on the edition's
+            // entitlement edge — renew that. A legacy standalone key has no
+            // bounded edge (null) and renews at key level instead.
+            $resp = $this->client->renewEdition(
+                $license->getLicenseId(),
+                (string)$license->getEdition(),
+                $idempotencyKey,
+                $license->getStoreId()
+            ) ?? $this->client->renewLicense(
                 $license->getLicenseId(),
                 $idempotencyKey,
                 $license->getStoreId()
@@ -157,7 +165,9 @@ class Management implements LicenseSubscriptionManagementInterface
             ));
             return;
         }
-        $bound = $resp['bound']['until'] ?? null;
+        // The row tracks ITS purchase's expiry: the edge bound when renewed per
+        // edition, the key bound on the legacy path.
+        $bound = $resp['edition_bound']['until'] ?? ($resp['bound']['until'] ?? null);
         if (is_string($bound) && $bound !== '') {
             $license->setData('bound_until', $bound);
         }

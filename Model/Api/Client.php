@@ -39,7 +39,11 @@ class Client
     public function issueLicense(string $edition, ?string $buyer, string $idempotencyKey, $storeId = null): array
     {
         $curl = $this->newCurl($storeId, ['Idempotency-Key' => $idempotencyKey]);
-        $payload = ['edition' => $edition];
+        // Always issue ACCOUNT keys: the key itself is unbounded and the
+        // edition's bound lives on its entitlement edge, so any later purchase —
+        // perpetual or time-bounded, in any order — can merge onto this key. The
+        // response carries the edge's expiry as `edition_bound`.
+        $payload = ['edition' => $edition, 'account' => true];
         if ($buyer !== null && $buyer !== '') {
             $payload['buyer'] = $buyer;
         }
@@ -76,6 +80,37 @@ class Client
         $curl = $this->newCurl($storeId, $headers);
         $curl->post($this->url('/license-keys/' . rawurlencode($licenseId) . '/renew', $storeId), '');
         return $this->handle($curl, [200], 'renew license');
+    }
+
+    /**
+     * Extend one edition's time-bounded entitlement edge on an accumulated key
+     * (the renewal for account keys, where each purchase carries its own bound).
+     * Idempotent on $idempotencyKey like key-level renewal.
+     *
+     * @return array<string, mixed>|null the refreshed license JSON (with
+     *     `edition_bound` for the renewed edition), or `null` when the key has no
+     *     bounded edge for this edition (HTTP 400 — a legacy standalone key) and
+     *     the caller should fall back to the key-level renew
+     * @throws ApiException
+     */
+    public function renewEdition(string $licenseId, string $edition, ?string $idempotencyKey = null, $storeId = null): ?array
+    {
+        $headers = ($idempotencyKey !== null && $idempotencyKey !== '')
+            ? ['Idempotency-Key' => $idempotencyKey]
+            : [];
+        $curl = $this->newCurl($storeId, $headers);
+        $curl->post(
+            $this->url(
+                '/license-keys/' . rawurlencode($licenseId)
+                . '/editions/' . rawurlencode($edition) . '/renew',
+                $storeId
+            ),
+            ''
+        );
+        if ($curl->getStatus() === 400) {
+            return null;
+        }
+        return $this->handle($curl, [200], 'renew edition on license');
     }
 
     /**

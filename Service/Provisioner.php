@@ -6,11 +6,12 @@
  * API failures are logged and skipped.
  *
  * Subscription-aware: a {@see ProviderPool} classifies each paid order. A one-off
- * order issues a key (as always). A subscription's **initial** order issues a key
- * and links it to the subscription; a subscription's **renewal** order extends
- * that same license (via the idempotent sconce `/renew`) instead of minting a new
- * key. With no subscription provider installed the pool is empty and every order
- * is a one-off — identical to before the seam existed.
+ * order issues or accumulates a key (see issueOrAccumulate). A subscription's
+ * **initial** order does the same and links its row to the subscription; a
+ * subscription's **renewal** order extends that same license — the edition's
+ * entitlement edge on an accumulated key, or the whole key on a legacy
+ * standalone one — instead of minting a new key. With no subscription provider
+ * installed the pool is empty and every order is a one-off.
  */
 
 declare(strict_types=1);
@@ -164,7 +165,9 @@ class Provisioner
             'license_id' => (string)($resp['id'] ?? ''),
             'license_key' => (is_string($key) && $key !== '') ? $this->encryptor->encrypt($key) : null,
             'status' => (string)($resp['status'] ?? 'active'),
-            'bound_until' => $resp['bound']['until'] ?? null,
+            // This item's own expiry: the edition's edge bound on an account key
+            // (the key-level bound is null there by design), else the key bound.
+            'bound_until' => $resp['edition_bound']['until'] ?? ($resp['bound']['until'] ?? null),
             'packages' => (isset($resp['packages']) && is_array($resp['packages']))
                 ? implode(',', $resp['packages'])
                 : null,
@@ -182,12 +185,14 @@ class Provisioner
     }
 
     /**
-     * Issue a key for this item, or — for a repeat perpetual purchase by a
-     * registered customer — accumulate the edition onto their existing account
-     * key so one Composer credential unlocks everything they own. Subscriptions
-     * (whose update bound is per-subscription) and guests (no account to
-     * accumulate onto) always get their own key. Returns the license JSON to
-     * store, in the same shape whether issued or accumulated.
+     * Issue a key for this item, or — for any repeat purchase by a registered
+     * customer — accumulate the edition onto their existing account key so one
+     * Composer credential unlocks everything they own. Since sconce carries the
+     * update bound per entitlement (not per key), time-bounded and subscription
+     * editions accumulate too: each purchase keeps its own expiry on the shared
+     * key, and a subscription renewal extends just its edition's edge. Guests
+     * (no account to accumulate onto) get their own key per order. Returns the
+     * license JSON to store, in the same shape whether issued or accumulated.
      *
      * @return array<string, mixed>
      * @throws ApiException
@@ -201,15 +206,14 @@ class Provisioner
         $storeId = $order->getStoreId();
         $customerId = $order->getCustomerId() ? (int)$order->getCustomerId() : null;
 
-        if ($resolved === null && $customerId !== null) {
-            $accountKey = $this->findAccountKey($customerId, $storeId);
-            if ($accountKey !== null) {
-                $resp = $this->client->addEdition($accountKey->getLicenseId(), $edition, $storeId);
+        if ($customerId !== null) {
+            foreach ($this->accountKeyCandidates($customerId, $storeId) as $licenseId) {
+                $resp = $this->client->addEdition($licenseId, $edition, $storeId);
                 if ($resp !== null) {
                     return $resp; // merged onto the customer's account key
                 }
-                // sconce refused to merge (a bounded/snapshot edition) — fall
-                // through and issue this edition its own standalone key.
+                // 409: this key can't absorb the edition (a legacy bounded key,
+                // or a snapshot edition) — try the next candidate.
             }
         }
         // The order id + item id is the idempotency key: a retried/re-invoiced
@@ -223,26 +227,32 @@ class Provisioner
     }
 
     /**
-     * The customer's "account key" — their most recent active, perpetual,
-     * non-subscription license — that a repeat perpetual purchase accumulates
-     * onto. Perpetual (`bound_until` null) and non-subscription (`subscription_id`
-     * null) only: sconce stores the update bound per key, so a bounded or
-     * subscription key can't absorb another edition. `null` if they have none yet.
+     * The customer's candidate account keys: their distinct active license ids,
+     * newest first. A row's `bound_until` can't distinguish an account key (rows
+     * track their own edition's edge expiry, while the KEY stays unbounded) from
+     * a legacy standalone bounded key — so instead of guessing locally, the
+     * caller attempts the merge and lets sconce's 409 rule out invalid targets
+     * (legacy bounded keys). Capped: any customer has at most a couple of keys
+     * (one account key, plus legacy standalones).
+     *
+     * @return string[] license ids
      */
-    private function findAccountKey(int $customerId, $storeId): ?License
+    private function accountKeyCandidates(int $customerId, $storeId): array
     {
         $collection = $this->collectionFactory->create();
         $collection->addFieldToFilter('customer_id', $customerId)
             ->addFieldToFilter('store_id', (int)$storeId)
             ->addFieldToFilter('status', 'active')
-            ->addFieldToFilter('bound_until', ['null' => true])
-            ->addFieldToFilter('subscription_id', ['null' => true])
             ->addFieldToFilter('license_id', ['neq' => ''])
-            ->setOrder('entity_id', 'DESC')
-            ->setPageSize(1);
-        /** @var License|false $license */
-        $license = $collection->getFirstItem();
-        return $license && $license->getId() ? $license : null;
+            ->setOrder('entity_id', 'DESC');
+        $ids = [];
+        foreach ($collection as $license) {
+            $ids[$license->getLicenseId()] = true;
+            if (count($ids) >= 3) {
+                break;
+            }
+        }
+        return array_keys($ids);
     }
 
     /**

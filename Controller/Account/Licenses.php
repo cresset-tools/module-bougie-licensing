@@ -23,7 +23,17 @@ class Licenses extends AbstractAccount implements HttpGetActionInterface
         parent::__construct($context);
     }
 
-    public function execute(): Page
+    /**
+     * No strict return type on purpose (core account-controller convention):
+     * Magento\Customer\Controller\Plugin\Account::aroundExecute short-circuits
+     * with an implicit null for unauthenticated sessions (the login redirect is
+     * set on the response), and the generated interceptor inherits this
+     * signature — a non-nullable return type turns that legitimate null into a
+     * TypeError for every logged-out visit.
+     *
+     * @return Page
+     */
+    public function execute()
     {
         $page = $this->resultPageFactory->create();
         $page->getConfig()->getTitle()->set(__('My Licenses'));

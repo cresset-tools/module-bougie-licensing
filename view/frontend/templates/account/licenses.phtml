@@ -35,11 +35,24 @@ $host = $block->getRepositoryHost();
                         <?php else: ?>
                             <span style="color:#a1260d"><?= $escaper->escapeHtml(__('revoked')) ?></span>
                         <?php endif; ?>
-                        <?php if ($group['boundUntil'] !== null): ?>
-                            &middot; <?= $escaper->escapeHtml(__('updates until %1', $group['boundUntil'])) ?>
-                        <?php endif; ?>
                     </p>
-                    <?php if ($packages !== []): ?>
+                    <?php if ($group['items'] !== []): ?>
+                        <ul style="margin:0 0 .5rem;padding-left:1.25rem;color:#555">
+                            <?php foreach ($group['items'] as $item): ?>
+                                <li>
+                                    <?= $escaper->escapeHtml(implode(', ', $item['packages']) ?: $item['edition']) ?>
+                                    &mdash;
+                                    <?php if ($item['boundUntil'] === null): ?>
+                                        <?= $escaper->escapeHtml(__('updates forever')) ?>
+                                    <?php elseif ($item['subscription']): ?>
+                                        <?= $escaper->escapeHtml(__('updates until %1 (renews with your subscription)', $item['boundUntil'])) ?>
+                                    <?php else: ?>
+                                        <?= $escaper->escapeHtml(__('updates until %1', $item['boundUntil'])) ?>
+                                    <?php endif; ?>
+                                </li>
+                            <?php endforeach; ?>
+                        </ul>
+                    <?php elseif ($packages !== []): ?>
                         <p style="margin:0 0 .5rem;color:#555">
                             <?= $escaper->escapeHtml(__('Entitled packages: %1', implode(', ', $packages))) ?>
                         </p>

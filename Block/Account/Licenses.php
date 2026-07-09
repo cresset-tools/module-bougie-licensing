@@ -62,13 +62,21 @@ class Licenses extends Template
     }
 
     /**
-     * The customer's licenses grouped by underlying key: a repeat buyer of
-     * perpetual editions accumulates onto one key, so several rows share a
-     * `license_id`. Each group is one card — one credential, the union of
-     * entitled packages, and the editions it covers. Newest group first. Rows
-     * with no key id (a failed issue) stand alone.
+     * The customer's licenses grouped by underlying key: a repeat buyer
+     * accumulates purchases onto one key, so several rows share a `license_id`.
+     * Each group is one card — one credential, the union of entitled packages,
+     * and one `items` entry per covered edition carrying ITS own expiry (the
+     * bound lives per entitlement, not per key: a perpetual tool and an annual
+     * subscription coexist on one card with different end dates). Newest group
+     * first. Rows with no key id (a failed issue) stand alone.
      *
-     * @return array<int, array{active: bool, boundUntil: ?string, editions: string[], packages: string[], key: ?string}>
+     * @return array<int, array{
+     *     active: bool,
+     *     editions: string[],
+     *     packages: string[],
+     *     key: ?string,
+     *     items: array<int, array{edition: string, packages: string[], boundUntil: ?string, subscription: bool}>
+     * }>
      */
     public function getLicenseGroups(): array
     {
@@ -88,21 +96,33 @@ class Licenses extends Template
             $editions = [];
             $packages = [];
             $key = null;
+            $items = [];
             foreach ($source as $license) {
                 $editions[] = $license->getEdition();
                 $packages = array_merge($packages, $license->getPackages());
                 if ($key === null) {
                     $key = $this->getLicenseKey($license);
                 }
+                // One item per edition; rows are newest-first, so the most
+                // recent purchase/renewal of an edition describes it.
+                $edition = $license->getEdition();
+                if ($edition !== '' && !isset($items[$edition])) {
+                    $items[$edition] = [
+                        'edition' => $edition,
+                        'packages' => $license->getPackages(),
+                        'boundUntil' => $license->getBoundUntil(),
+                        'subscription' => (string)$license->getData('subscription_id') !== '',
+                    ];
+                }
             }
             $packages = array_values(array_unique($packages));
             sort($packages);
             $groups[] = [
                 'active' => $active !== [],
-                'boundUntil' => $rows[0]->getBoundUntil(),
                 'editions' => array_values(array_unique(array_filter($editions))),
                 'packages' => $packages,
                 'key' => $key,
+                'items' => array_values($items),
             ];
         }
         return $groups;

@@ -60,4 +60,11 @@
             <argument name="logger" xsi:type="object">BougieLicensingLogger</argument>
         </arguments>
     </type>
+    <type name="Magento\Framework\Console\CommandList">
+        <arguments>
+            <argument name="commands" xsi:type="array">
+                <item name="bougie_licenses_consolidate" xsi:type="object">Cresset\BougieLicensing\Console\Command\ConsolidateLicenses</item>
+            </argument>
+        </arguments>
+    </type>
 </config>

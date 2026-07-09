@@ -114,6 +114,30 @@ class Client
     }
 
     /**
+     * Fold one license key's entitlements into another and revoke the source —
+     * consolidating a legacy standalone key onto the customer's account key.
+     * Bounds are materialized sconce-side (remaining time moves; no fresh
+     * period, unlike addEdition).
+     *
+     * @return array<string, mixed>|null the updated target license JSON, or
+     *     `null` when sconce refuses (HTTP 409 — the target key is bounded) and
+     *     the caller should leave the source key alone
+     * @throws ApiException
+     */
+    public function mergeLicense(string $sourceId, string $targetId, $storeId = null): ?array
+    {
+        $curl = $this->newCurl($storeId);
+        $curl->post(
+            $this->url('/license-keys/' . rawurlencode($sourceId) . '/merge', $storeId),
+            $this->json->serialize(['into' => $targetId])
+        );
+        if ($curl->getStatus() === 409) {
+            return null;
+        }
+        return $this->handle($curl, [200], 'merge license');
+    }
+
+    /**
      * Revoke a license key. Idempotent-ish: a 404 (already gone) is treated as
      * success so a repeated refund doesn't error.
      *

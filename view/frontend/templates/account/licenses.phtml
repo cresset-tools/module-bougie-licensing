@@ -16,7 +16,9 @@ $host = $block->getRepositoryHost();
         <?php if (empty($groups)): ?>
             <p><?= $escaper->escapeHtml(__('You have no licenses yet. They appear here once an order with a licensed product is paid.')) ?></p>
         <?php else: ?>
-            <p><?= $escaper->escapeHtml(__('Install your purchased packages with Composer using the license key as the http-basic password (the username is ignored). A single key unlocks everything you own.')) ?></p>
+            <p><?= $escaper->escapeHtml(count($groups) > 1
+                ? __('Install your purchased packages with Composer using the license key as the http-basic password (the username is ignored). Your perpetual purchases share one key; time-limited and subscription products each have their own.')
+                : __('Install your purchased packages with Composer using the license key as the http-basic password (the username is ignored). A single key unlocks everything you own.')) ?></p>
             <?php foreach ($groups as $group): ?>
                 <?php
                 $key = $group['key'];
